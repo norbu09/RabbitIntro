@@ -1,0 +1,9 @@
+require 'rubygems'
+require 'mq'
+
+EM.run {
+  amq = MQ.new
+  amq.queue("login").subscribe do |login|
+    puts login
+  end
+}
