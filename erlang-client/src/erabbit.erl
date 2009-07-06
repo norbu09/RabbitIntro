@@ -22,9 +22,10 @@ dump(Conn) ->
      Content = lib_amqp:get(Channel, Q),
      case Content of
          #content{payload_fragments_rev = Payload} ->
-             io:format("!! Got: ~s~n", [Payload]);
+             {ok, Payload};
          'basic.get_empty' ->
-             io:format("!! Got nothing~n")
+             {ok, empty};
+         _ -> {err, unknown}
      end.
 
 stop(Conn) ->
