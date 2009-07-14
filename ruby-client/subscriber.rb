@@ -3,7 +3,7 @@ require 'mq'
 
 EM.run {
   amq = MQ.new
-  amq.queue("test").subscribe do |login|
+  amq.queue("log").subscribe do |login|
     puts login
   end
 }

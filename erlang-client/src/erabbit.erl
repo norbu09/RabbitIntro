@@ -40,5 +40,6 @@ setup_channel(Conn) ->
     Connection = lib_amqp:start_connection(Host),
     io:format("** Connection started~n"),
     Channel = lib_amqp:start_channel(Connection),
+    amqp_channel:register_return_handler(Channel, self()),
     io:format("** Channel started~n"),
     {ok, {Channel, Connection}}.
