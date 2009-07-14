@@ -11,6 +11,7 @@ use IO::Socket::INET;
 use Data::Dumper;
 
 our $remote;
+our $debug = 1;
 
 sub connect {
     my $spec = shift;
@@ -32,9 +33,10 @@ sub connect {
 }
 
 sub queue {
+    my $queue = shift;
     my %opts = (
         ticket       => 0,
-        queue        => 'log',
+        queue        => $queue,
         consumer_tag => '',                 # auto-generated
                                             #no_local     => 0,
         no_ack       => 1,
@@ -58,6 +60,18 @@ sub queue {
     _print($frame);
 }
 
+sub poll {
+    my @frames = _read();
+    my @result;
+    foreach my $frame (@frames){
+        if ( $frame->isa('Net::AMQP::Frame::Body') ) {
+            push(@result, $frame->{payload});
+        }
+    }
+    return @result;
+}
+
+
 sub _read {
 
     my $data;
@@ -75,8 +89,8 @@ sub _read {
     }
 
     my @frames = Net::AMQP->parse_raw_frames( \$stack );
-    print STDERR "<-- " . Dumper(@frames);
-    print STDERR "-----------\n";
+    print STDERR "<-- " . Dumper(@frames) if $debug;
+    print STDERR "-----------\n" if $debug;
     return @frames;
 }
 
@@ -155,6 +169,54 @@ sub callbacks {
     }
 }
 
+sub pub {
+    my($queue, $message) = @_;
+    
+    my %method_opts = (
+        ticket      => 0,
+        #exchange    => '', # default exchange
+        routing_key => $queue, # route to my queue
+        mandatory   => 1,
+        #immediate   => 0,
+    );
+
+    my %content_opts = (
+        content_type     => 'application/octet-stream',
+        #content_encoding => '',
+        #headers          => {},
+        delivery_mode    => 1, # non-persistent
+        priority         => 1,
+        #correlation_id   => '',
+        #reply_to         => '',
+        #expiration       => '',
+        #message_id       => '',
+        #timestamp        => time,
+        #type             => '',
+        #user_id          => '',
+        #app_id           => '',
+        #cluster_id       => '',
+    );
+
+    my $output = Net::AMQP::Protocol::Basic::Publish->new(%method_opts);
+    my $frame = $output->isa("Net::AMQP::Protocol::Base") ? $output->frame_wrap : $output;
+    $frame->channel(2);
+    _print($frame);
+    $output = Net::AMQP::Frame::Header->new(
+        weight       => 0,
+        body_size    => length($message),
+        header_frame => Net::AMQP::Protocol::Basic::ContentHeader->new(%content_opts),
+    );
+    $frame = $output->isa("Net::AMQP::Protocol::Base") ? $output->frame_wrap : $output;
+    $frame->channel(2);
+    _print($frame);
+    $output = Net::AMQP::Frame::Body->new(payload => $message);
+    $frame = $output->isa("Net::AMQP::Protocol::Base") ? $output->frame_wrap : $output;
+    $frame->channel(2);
+    _print($frame);
+
+}
+
+
 sub _print {
     my $output = shift;
     if ( $output->isa("Net::AMQP::Protocol::Base") ) {
@@ -162,7 +224,7 @@ sub _print {
     }
     $output->channel(0) unless defined $output->channel;
 
-    print STDERR "--> " . Dumper($output) . "\n";
+    print STDERR "--> " . Dumper($output) . "\n" if $debug;
     print $remote $output->to_raw_frame();
 }
 

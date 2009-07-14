@@ -3,6 +3,7 @@
 use strict;
 use warnings;
 use Simple;
+use Data::Dumper;
 
 my $spec = {
     RemoteAddress => '127.0.0.1',
@@ -23,7 +24,10 @@ my $spec = {
 };
 
 Simple::connect($spec);
-Simple::queue();
+#Simple::queue("log");
+
+Simple::pub("log", "helo world");
+
 while(1){
-    Simple::_read();
+    print Dumper(Simple::poll());
 }
