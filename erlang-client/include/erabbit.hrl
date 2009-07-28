@@ -1,1 +1,6 @@
--record(erabbit_conn,{host = "localhost", q, channel, connection}).
+-record(erabbit_conn,
+    {host = "localhost", 
+     user = "guest",
+     pass = "guest",
+     vhost = "/",
+     q, channel, connection}).

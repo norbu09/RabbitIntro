@@ -35,9 +35,9 @@ stop(Conn) ->
     ok.
 
 setup_channel(Conn) ->
-    #erabbit_conn{host = Host} = Conn,
+    #erabbit_conn{host = Host, user = User, pass = Pass, vhost = Vhost} = Conn,
     io:format("** starting ...~n"),
-    Connection = lib_amqp:start_connection(Host),
+    Connection = amqp_connection:start(User, Pass, Host, Vhost),
     io:format("** Connection started~n"),
     Channel = lib_amqp:start_channel(Connection),
     amqp_channel:register_return_handler(Channel, self()),
