@@ -2,15 +2,15 @@
 
 use strict;
 use warnings;
-use Simple;
+use Net::AMQP::Simple;
 use Data::Dumper;
 
 my $spec = {
     RemoteAddress => '127.0.0.1',
     RemotePort    => { default => 5672 },
-    Username      => { default => 'guest' },
-    Password      => { default => 'guest' },
-    VirtualHost   => { default => '/' },
+    Username      => { default => 'hase' },
+    Password      => { default => 'hase' },
+    VirtualHost   => { default => '/hase' },
 
     Logger => 0,
     Debug  => { default => {} },
@@ -23,11 +23,14 @@ my $spec = {
     is_started => { default => 0 },
 };
 
-Simple::connect($spec);
-#Simple::queue("log");
+Net::AMQP::Simple::connect($spec);
+#Net::AMQP::Simple::queue("log");
 
-Simple::pub("log", "helo world");
+Net::AMQP::Simple::pub("log", "helo world");
 
-while(1){
-    print Dumper(Simple::poll());
-}
+#while(1){
+#    print Dumper(Net::AMQP::Simple::poll());
+#}
+
+Net::AMQP::Simple::close();
+
